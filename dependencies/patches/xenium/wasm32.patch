@@ -1,0 +1,81 @@
+--- a/xenium/marked_ptr.hpp
++++ b/xenium/marked_ptr.hpp
+@@ -43,14 +43,21 @@
+   static constexpr uintptr_t pointer_bits = sizeof(T*) * 8 - MarkBits;
+   static constexpr uintptr_t MarkMask = (static_cast<uintptr_t>(1) << MarkBits) - 1;
+ 
+-  static constexpr uintptr_t lower_mark_bits = MarkBits < MaxUpperMarkBits ? 0 : MarkBits - MaxUpperMarkBits;
++  // 32-bit targets have no spare upper pointer bits; keep every mark bit in
++  // the alignment bits. Native 64-bit targets retain the upstream layout.
++  static constexpr uintptr_t lower_mark_bits = sizeof(T*) == 4
++                                                 ? MarkBits
++                                                 : (MarkBits < MaxUpperMarkBits ? 0 : MarkBits - MaxUpperMarkBits);
+   static constexpr uintptr_t upper_mark_bits = MarkBits - lower_mark_bits;
+-  static constexpr uintptr_t pointer_mask = ((static_cast<uintptr_t>(1) << pointer_bits) - 1) << lower_mark_bits;
++  static constexpr uintptr_t pointer_width_mask = ~static_cast<uintptr_t>(0);
++  static constexpr uintptr_t pointer_mask =
++    (((static_cast<uintptr_t>(1) << pointer_bits) - 1) << lower_mark_bits) & pointer_width_mask;
+ 
+ public:
+   static constexpr uintptr_t number_of_mark_bits = MarkBits;
+   static_assert(MarkBits <= 32, "MarkBits must not be greater than 32.");
+-  static_assert(sizeof(T*) == 8, "marked_ptr requires 64bit pointers.");
++  static_assert(MarkBits < sizeof(T*) * 8, "MarkBits must be smaller than the pointer width.");
++  static_assert(sizeof(T*) == 4 || sizeof(T*) == 8, "marked_ptr requires 32-bit or 64-bit pointers.");
+ 
+   /**
+    * @brief Construct a marked_ptr with an optional mark value.
+@@ -176,4 +183,4 @@
+   #pragma warning(pop)
+ #endif
+ 
+-#endif
+\ No newline at end of file
++#endif
+--- a/xenium/utils.hpp
++++ b/xenium/utils.hpp
+@@ -8,7 +8,11 @@
+ 
+ #include <xenium/detail/port.hpp>
+ 
++#include <climits>
+ #include <cstdint>
++#if defined(__wasm32__) || defined(__wasm__)
++  #include <chrono>
++#endif
+ #ifdef _M_AMD64
+   #include <intrin.h>
+ #endif
+@@ -45,14 +49,16 @@
+ // TODO - use intrinsics for rotate operation (if available)
+ template <uintptr_t C>
+ struct rotate {
++  static constexpr uintptr_t bit_width = sizeof(uintptr_t) * CHAR_BIT;
++
+   static uintptr_t left(uintptr_t v) {
+-    static_assert(C > 0, "should never happen!");
+-    return (v >> (64 - C)) | (v << C);
++    static_assert(C > 0 && C < bit_width, "rotation count must be within uintptr_t width");
++    return (v >> (bit_width - C)) | (v << C);
+   }
+ 
+   static uintptr_t right(uintptr_t v) {
+-    static_assert(C > 0, "should never happen!");
+-    return (v >> C) | (v << (64 - C));
++    static_assert(C > 0 && C < bit_width, "rotation count must be within uintptr_t width");
++    return (v >> C) | (v << (bit_width - C));
+   }
+ };
+ 
+@@ -88,6 +94,11 @@
+   __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(val));
+   return val;
+ }
++#elif defined(__wasm32__) || defined(__wasm__)
++static inline std::uint64_t getticks() {
++  return static_cast<std::uint64_t>(
++    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
++}
+ #else
+   // TODO - add support for more architectures!
+   #error "Unsupported architecture"

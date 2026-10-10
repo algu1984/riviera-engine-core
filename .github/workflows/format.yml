@@ -1,0 +1,25 @@
+name: Format check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned formatter tools
+        run: bash tools/setup-format-tools.sh
+      - name: Check formatting
+        run: make format-check
+      - name: Initialize pinned core dependencies
+        run: make deps
+      - name: Check portable core boundary
+        run: make boundary-check

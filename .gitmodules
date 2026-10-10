@@ -1,0 +1,3 @@
+[submodule "third_party/xenium"]
+	path = third_party/xenium
+	url = https://github.com/mpoeter/xenium.git

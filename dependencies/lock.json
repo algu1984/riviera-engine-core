@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    {
+      "name": "xenium",
+      "path": "third_party/xenium",
+      "patches": ["patches/xenium/wasm32.patch"]
+    }
+  ]
+}

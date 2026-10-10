@@ -1,0 +1,31 @@
+Xenium — a C++ library providing concurrent data structures and reclamation schemes
+Copyright (c) 2018-2020 Manuel Pöter
+Upstream: https://github.com/mpoeter/xenium
+Pinned commit: 1c449ae953ce2a440b0d16c5ed1181d2754860ab
+Upstream source: the official Git submodule at third_party/xenium/
+License: MIT. The complete license text follows and is also included in
+third_party/xenium/LICENSE.
+
+The local changes are limited to dependencies/patches/xenium/wasm32.patch. See
+docs/XENIUM.md for provenance and reproduction steps.
+MIT License
+
+Copyright (c) 2018 Manuel Pöter
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
