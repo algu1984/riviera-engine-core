@@ -10,6 +10,7 @@ headers retain the established `engine::` namespace and `engine/...` paths.
 The core has no operating-system thread creation and no browser, Emscripten, WebGPU, renderer, or physics-engine dependency in its authored library headers and sources. Applications may provide an ECS world that includes both core hierarchy components and their own renderer/game components; hierarchy propagation operates directly on that same typed world.
 
 See [docs/CORE_DESIGN.md](docs/CORE_DESIGN.md) for the high-level architecture and design decisions.
+See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for reproducible native benchmarks and their scope.
 
 ## Build and verify
 

@@ -8,7 +8,7 @@ CORE_OBJECTS := $(patsubst $(CORE_ROOT)/src/%.cpp,build/%.o,$(CORE_SOURCES))
 TEST_FLAGS := $(CXXFLAGS) $(CORE_INCLUDE_FLAGS) -I$(CORE_ROOT)/tests
 WASM_FLAGS := -std=c++20 -O2 -Wall -Wextra -pthread -fno-exceptions $(CORE_INCLUDE_FLAGS)
 
-.PHONY: all build test ecs-test systems-test runtime-test requested-exchange-test hierarchy-test jobs-test xenium-portability-test wasm-test clean format format-check boundary-check deps deps-check
+.PHONY: all build test ecs-test systems-test runtime-test requested-exchange-test hierarchy-test jobs-test xenium-portability-test wasm-test clean format format-check boundary-check deps deps-check benchmark
 all: build test
 
 deps:
@@ -65,6 +65,12 @@ build/jobs-test: tests/jobs.cpp $(CORE_SOURCES) $(CORE_HEADERS) $(CORE_XENIUM_HE
 	$(CXX) $(TEST_FLAGS) $(filter %.cpp,$^) -o $@
 jobs-test: build/jobs-test
 	./build/jobs-test
+
+build/core-benchmark: benchmarks/core.cpp $(CORE_HEADERS) $(CORE_XENIUM_HEADERS) $(CORE_SOURCES) Makefile core.mk | deps-check
+	mkdir -p build
+	$(CXX) -std=c++20 -O3 -DNDEBUG -ffp-contract=off -Wall -Wextra -pthread $(CORE_INCLUDE_FLAGS) benchmarks/core.cpp $(CORE_SOURCES) -o $@
+benchmark: build/core-benchmark
+	./build/core-benchmark $(or $(BENCH_SAMPLES),31) $(or $(BENCH_WARMUP),2)
 
 build/xenium-portability-native-test: tests/xenium_portability.cpp $(CORE_XENIUM_HEADERS) Makefile core.mk | deps-check
 	mkdir -p build
