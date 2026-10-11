@@ -1,0 +1,35 @@
+docs/PERFORMANCE.md
+  s_fbdf8bf039c74a::t_9b2b5aa1c9dc8a 16-17,20,42
+  s_fbdf8bf039c74a::t_b503e024d5742e 18,22-24,26-27,30-34
+README.md
+  s_fbdf8bf039c74a::t_7366e69203225e 14,26-28
+  s_fbdf8bf039c74a::t_9630c33832c5f0 29
+benchmarks/results/native-sample.json
+  s_fbdf8bf039c74a::t_50ad9dd8fd49b0 22-23,27,32-33,39-40,46-47
+  s_fbdf8bf039c74a::t_b7ff1481bb7fac 1-21,24-26,28-31,34-38,41-45,48-131
+LICENSE
+  s_fbdf8bf039c74a::t_23c6946c2c0ae5 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.9",
+  "base_commit_sha": "d65ad198f38c690bdbd38cdcea972f8bb16154eb",
+  "prompts": {},
+  "sessions": {
+    "s_fbdf8bf039c74a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d24-65ec-7e72-9466-f1d1d208f4ac",
+        "model": "gpt-6-luna"
+      },
+      "human_author": "Alexandr Hmyriak <agmyryak@playtika.com>",
+      "token_usage": {
+        "input_tokens": 44935,
+        "output_tokens": 14941,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 3832576
+      },
+      "billing_source": "subscription"
+    }
+  }
+}
