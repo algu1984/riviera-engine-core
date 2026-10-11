@@ -8,7 +8,7 @@ CORE_OBJECTS := $(patsubst $(CORE_ROOT)/src/%.cpp,build/%.o,$(CORE_SOURCES))
 TEST_FLAGS := $(CXXFLAGS) $(CORE_INCLUDE_FLAGS) -I$(CORE_ROOT)/tests
 WASM_FLAGS := -std=c++20 -O2 -Wall -Wextra -pthread -fno-exceptions $(CORE_INCLUDE_FLAGS)
 
-.PHONY: all build test ecs-test systems-test runtime-test hierarchy-test jobs-test xenium-portability-test wasm-test clean format format-check boundary-check deps deps-check
+.PHONY: all build test ecs-test systems-test runtime-test requested-exchange-test hierarchy-test jobs-test xenium-portability-test wasm-test clean format format-check boundary-check deps deps-check
 all: build test
 
 deps:
@@ -47,6 +47,12 @@ build/runtime-test: tests/runtime.cpp $(CORE_HEADERS) Makefile core.mk | deps-ch
 	$(CXX) $(TEST_FLAGS) $< -o $@
 runtime-test: build/runtime-test
 	./build/runtime-test
+
+build/requested-exchange-test: tests/requested_exchange.cpp $(CORE_HEADERS) Makefile core.mk | deps-check
+	mkdir -p build
+	$(CXX) $(TEST_FLAGS) $< -o $@
+requested-exchange-test: build/requested-exchange-test
+	./build/requested-exchange-test
 
 build/hierarchy-test: tests/hierarchy.cpp $(CORE_HEADERS) $(CORE_XENIUM_HEADERS) Makefile core.mk | deps-check
 	mkdir -p build
@@ -92,7 +98,7 @@ wasm-test: build/wasm-ecs-test.js build/wasm-ecs-concurrency-test.js build/wasm-
 	node build/wasm-runtime-test.js
 	node build/wasm-systems-test.js
 
-test: deps-check ecs-test systems-test runtime-test hierarchy-test jobs-test xenium-portability-test boundary-check
+test: deps-check ecs-test systems-test runtime-test requested-exchange-test hierarchy-test jobs-test xenium-portability-test boundary-check
 
 boundary-check: deps-check
 	python3 tools/check_boundary.py

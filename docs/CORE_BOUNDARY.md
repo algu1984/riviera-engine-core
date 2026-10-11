@@ -56,18 +56,33 @@ where needed; ordinary component data relies on scheduling. Required concurrent
 atomic types must be lock-free on the target. Allocation, constructors, destructors,
 and application callbacks are outside the algorithmic progress guarantee.
 
-## Immutable snapshots
+## Presentation extraction and immutable snapshots
 
-Snapshot publication is independent of ECS Commands. Readers acquire immutable
-previous/current pairs and retain their storage, including after reset or exchange
-teardown. Publication and reset may decline when the bounded live-value quota is
-occupied. A slow reader does not require the producer to wait. Published payloads
-cannot safely alias mutable ECS component storage.
+`RequestedExchange<T>` is a portable single-producer/single-consumer channel for
+on-demand presentation extraction. The render owner calls `request()`; repeated
+requests coalesce. A ready unread value satisfies new requests. The simulation
+owner calls `produce(fill)` only at a safe tick boundary. It returns immediately
+when no request or writable payload slot exists, leaving a request pending when
+both reusable payloads are busy. There is at most one ready unread value. Two `T`
+objects are constructed with the exchange and reused; fill callbacks should clear
+and refill growable members to preserve capacity. `ReadHandle` is move-only and
+keeps its slot unavailable until destruction. The handle and exchange must not
+outlive each other, and destruction requires both owners to be quiescent.
 
-The snapshot exchange and ready-job queue retain their Xenium lifetime mechanisms.
-Xenium is no longer the component storage or lifetime model. Its upstream pin and
-portability patch remain core-owned because those independent concurrent services
-still depend on it. See [XENIUM.md](XENIUM.md).
+The payload handoff uses acquire/release atomics; it has no mutex, condition
+variable, semaphore, blocking wait, or per-publication wrapper allocation. The fill
+callback runs on the simulation owner, must not retain payload references, and may
+throw; an exception restores the slot and leaves the request pending. Owner-thread
+confinement is a caller contract. The host owns worker creation and cadence; the
+exchange only provides requested extraction at producer-selected safe boundaries.
+
+`SnapshotExchange<T>` remains available for consumers needing retained
+previous/current pairs, interpolation history, reset semantics, or snapshots that
+outlive the exchange. It uses Xenium lifetime mechanisms and bounded publication.
+The requested exchange does not change that API or policy. Xenium is no longer the
+component storage or lifetime model; its upstream pin and portability patch remain
+core-owned because those independent concurrent services still depend on it. See
+[XENIUM.md](XENIUM.md).
 
 ## Integration
 

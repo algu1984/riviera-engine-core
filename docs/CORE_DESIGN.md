@@ -205,17 +205,16 @@ relationships and writes global transforms. Its position in the graph follows
 those access declarations and the module's logical dependencies. Individual
 matrix elements do not need atomic access.
 
-Snapshot exchange remains independent of structural command application. An
-extraction stage constructs a complete immutable presentation value and publishes
-it atomically. Render retains the published value for its use; it does not read
-mutable ECS storage. Physics and rendering can therefore progress at different
-cadences without changing the world's borrowing rules.
+Extraction is independent of structural command application. The new
+`RequestedExchange<T>` lets a consumer request an extraction while the producer
+continues on its own cadence. The producer fills reusable presentation payload
+storage only at a safe boundary when a request is pending. It never waits for the
+consumer and never builds extraction payloads without a request.
 
-Readers can retain old publications, while publication uses a bounded history
-budget. A missing new value leaves the last valid state available and does not
-block rendering. A discontinuity resets interpolation history. Published payloads
-must not contain borrowed mutable component pointers. Snapshot lifetime management
-and the general job queue may continue using Xenium independently of ECS storage.
+`SnapshotExchange<T>` remains available to consumers that need retained previous
+and current publications, interpolation history, or its bounded Xenium-backed
+lifetime model. The requested exchange is a separate policy for on-demand
+extraction. Neither payload form may contain borrowed mutable component pointers.
 
 ## Decisions and consequences
 
