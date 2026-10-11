@@ -1,0 +1,22 @@
+Makefile
+  h_9f89d000628188 11,51-56,101
+docs/CORE_BOUNDARY.md
+  h_9f89d000628188 59-85
+docs/CORE_DESIGN.md
+  h_9f89d000628188 208-217
+include/engine/runtime/requested_exchange.hpp
+  h_9f89d000628188 1-153
+tests/requested_exchange.cpp
+  h_9f89d000628188 1-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.9",
+  "base_commit_sha": "50f362e5cb37208f1b08c1554545a278bf928872",
+  "prompts": {},
+  "humans": {
+    "h_9f89d000628188": {
+      "author": "Alexandr Hmyriak <agmyryak@playtika.com>"
+    }
+  }
+}
