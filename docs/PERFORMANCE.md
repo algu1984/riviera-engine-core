@@ -13,27 +13,25 @@ No timing threshold is enforced by CI.
 The following results were recorded on 2026-10-11 on an Apple M1 Pro MacBook
 Pro (10 hardware threads, macOS 26.4.1), using Apple LLVM 17.0.0 and the flags
 listed above. Each value is the median of three sequential runs; each run used
-31 timed samples and 2 warmups. ECS latency is normalized to one entity update
-tick. The matching checksums are shown to make the work comparable.
+31 timed samples and 2 warmups. ECS latency is reported per full update pass
+over all entities. The [Core-only JSON sample](../benchmarks/results/native-sample.json)
+contains the complete environment, checksums, scheduler and exchange results.
 
-| Entities | Core ECS ns/tick | Direct arrays ns/tick | Checksum |
+| Entities | Core ECS median ns/pass | p95 ns/pass | Checksum |
 | ---: | ---: | ---: | ---: |
-| 1,000 | 198.75 | 334.59 | 12,211,798,566 |
-| 10,000 | 3,493.75 | 3,725.00 | 123,294,019,222 |
-| 100,000 | 34,754.58 | 36,180.84 | 1,233,697,109,572 |
+| 1,000 | 198.75 | 201.25 | 12,211,798,566 |
+| 10,000 | 3,493.75 | 3,847.50 | 123,294,019,222 |
+| 100,000 | 34,754.58 | 41,011.25 | 1,233,697,109,572 |
 
-The exchange p50/p95 latency medians were 250/4,250 ns for a 64-float payload
-and 458/3,958 ns for a 1,024-float payload. Corresponding vector-copy reference
-times were 4.56/5.53 ns and 52.73/53.06 ns per copy. No payload capacity growth
+The requested exchange p50/p95 latency medians were 250/4,250 ns for a 64-float
+payload and 458/3,958 ns for a 1,024-float payload. No payload capacity growth
 occurred during the measured handoffs.
 
-For eight jobs, serial versus 1, 2, and 4 total workers took 41/792/792/3,709 ns
-for one recurrence step per task, and 76,500/77,042/43,625/23,041 ns for 10,000
-steps per task. All worker counts produced the same expected checksum in every
-sample. These are machine-specific observations; the exchange's long p95 tail
-and scheduler variability make the raw JSONL more useful than a single ratio.
-The three source runs are retained under the ignored `build` directory when
-the benchmark is run locally.
+For eight scheduler tasks with one recurrence step each, median times were
+792/792/3,709 ns on 1/2/4 workers. With 10,000 steps per task, they were
+77,042/43,625/23,041 ns. Every worker count produced the expected checksum.
+These are machine-specific observations; the exchange's long p95 tail and
+scheduler variability make the raw JSONL more useful than a single ratio.
 
 The ECS cases create 1,000, 10,000, and 100,000 entities with three-float
 `Position` and `Velocity` components. Initial values are position
@@ -41,7 +39,7 @@ The ECS cases create 1,000, 10,000, and 100,000 entities with three-float
 ticks of `position += velocity * (1/120)` to the cached Core world or to
 equivalent direct `std::vector` arrays. Setup is outside the timed region;
 `setup_ns` covers world and array initialization. Reported median and p95 are
-normalized to one entity update pass, and throughput is entity updates per
+per full update pass over all queried entities, and throughput is entity updates per
 second. The final checksum sums each coordinate after conversion to double and truncates the total times
 100,000 to an unsigned integer. The harness aborts if Core and direct-array
 checksums differ.

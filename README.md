@@ -11,6 +11,7 @@ The core has no operating-system thread creation and no browser, Emscripten, Web
 
 See [docs/CORE_DESIGN.md](docs/CORE_DESIGN.md) for the high-level architecture and design decisions.
 See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for reproducible native benchmarks and their scope.
+The latest Core-only native result sample is available at [benchmarks/results/native-sample.json](benchmarks/results/native-sample.json).
 
 ## Build and verify
 
@@ -21,6 +22,10 @@ See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for reproducible native benchmark
 ## Snapshot exchange
 
 `SnapshotExchange<T>` publishes immutable previous/current pairs with Xenium lock-free reference-count guards. A separate lock-free quota limits it to three live snapshot values, including those retained by old reader pairs. Publication and reset can fail while those values remain pinned; callers may retry after releasing snapshots. Pair guards keep old snapshots readable after reset and exchange destruction. The implementation does not use a mutex or `std::atomic<std::shared_ptr>`; the library does not claim that every allocator or C++ runtime operation is lock-free.
+
+## License
+
+Riviera Engine Core's authored code is licensed under the [MIT License](LICENSE), copyright 2026 Alexandr Hmyriak. Third-party dependencies retain their own license terms; see the notices and documentation for each dependency.
 
 ## Third-party code
 

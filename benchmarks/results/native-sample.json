@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "riviera-engine-core-native-2026-10-11",
+  "recorded_at": "2026-10-11",
+  "source_file": "benchmarks/core.cpp",
+  "documentation_file": "docs/PERFORMANCE.md",
+  "environment": {
+    "machine": "MacBook Pro 18,1",
+    "cpu": "Apple M1 Pro",
+    "hardware_threads": 10,
+    "operating_system": "macOS 26.4.1",
+    "architecture": "arm64",
+    "compiler": "Apple LLVM 17.0.0 (clang-1700.6.3.2)",
+    "language_standard": "C++20",
+    "compiler_flags": "-O3 -DNDEBUG -ffp-contract=off"
+  },
+  "sampling": {
+    "independent_runs": 3,
+    "samples_per_run": 31,
+    "warmups_per_run": 2,
+    "aggregation": "median of the three per-run medians; p95 is the median of the three per-run nearest-rank p95 values",
+    "ecs_passes_per_sample": 100,
+    "simulation_tick_seconds": 0.008333333333333333
+  },
+  "ecs": {
+    "kernel": "Position += Velocity * (1/120), three f32 coordinates",
+    "timing_unit": "nanoseconds per full update pass over all entities",
+    "checksum_definition": "sum final position coordinates widened to f64, multiply by 100000, truncate to u64",
+    "results": [
+      {
+        "entities": 1000,
+        "median_ns_per_update_pass": 198.75,
+        "p95_ns_per_update_pass": 201.25,
+        "entity_updates_per_second": 5031446540.88,
+        "checksum": "12211798566"
+      },
+      {
+        "entities": 10000,
+        "median_ns_per_update_pass": 3493.75,
+        "p95_ns_per_update_pass": 3847.5,
+        "entity_updates_per_second": 2862246877.23,
+        "checksum": "123294019222"
+      },
+      {
+        "entities": 100000,
+        "median_ns_per_update_pass": 34754.58,
+        "p95_ns_per_update_pass": 41011.25,
+        "entity_updates_per_second": 2877328058.17,
+        "checksum": "1233697109572"
+      }
+    ]
+  },
+  "job_scheduler": {
+    "tasks_per_sample": 8,
+    "workers_definition": "total participating workers including the caller",
+    "workloads": [
+      {
+        "work_iterations_per_task": 1,
+        "results": [
+          {
+            "workers": 1,
+            "median_ns": 792,
+            "p95_ns": 2125,
+            "checksum": "8763727584"
+          },
+          {
+            "workers": 2,
+            "median_ns": 792,
+            "p95_ns": 875,
+            "checksum": "8763727584"
+          },
+          {
+            "workers": 4,
+            "median_ns": 3709,
+            "p95_ns": 6416,
+            "checksum": "8763727584"
+          }
+        ]
+      },
+      {
+        "work_iterations_per_task": 10000,
+        "results": [
+          {
+            "workers": 1,
+            "median_ns": 77042,
+            "p95_ns": 79125,
+            "checksum": "4856204858203840008"
+          },
+          {
+            "workers": 2,
+            "median_ns": 43625,
+            "p95_ns": 59208,
+            "checksum": "4856204858203840008"
+          },
+          {
+            "workers": 4,
+            "median_ns": 23041,
+            "p95_ns": 31958,
+            "checksum": "4856204858203840008"
+          }
+        ]
+      }
+    ]
+  },
+  "requested_exchange": {
+    "measurement": "request-to-acquire latency, two threads",
+    "capacity_growths_during_measurement": 0,
+    "results": [
+      {
+        "payload_floats": 64,
+        "payload_bytes": 256,
+        "workers": 2,
+        "median_ns": 250,
+        "p95_ns": 4250,
+        "capacity_growths": 0
+      },
+      {
+        "payload_floats": 1024,
+        "payload_bytes": 4096,
+        "workers": 2,
+        "median_ns": 458,
+        "p95_ns": 3958,
+        "capacity_growths": 0
+      }
+    ]
+  },
+  "notes": [
+    "Machine-specific native measurements; they do not imply performance on other hardware or workloads.",
+    "The result contains only Riviera Engine Core ECS, scheduler, and requested-exchange measurements."
+  ]
+}
