@@ -1,0 +1,52 @@
+benchmarks/core.cpp
+  s_fbdf8bf039c74a::t_b2cf54ae5cdd5a 194-195,205-209,212,224-226,232
+  s_fbdf8bf039c74a::t_dbde599bcef96c 198-199,227,229,231,233-236,241-243,246-247,262-263,280
+  s_fbdf8bf039c74a::t_64bdaaf40a8d9c 64-66,102-104
+  s_fbdf8bf039c74a::t_3bf58cef0a0951 118-121,126-128,131-132,135,140-141,151,155-157,160-161,185,188,191
+  s_fbdf8bf039c74a::t_3fa7173eb22086 13,15,21-26,32-34,40-42,45-46,51-53,59-60,77-79,81-82,86-88,106-107,109-110,113-115,122-125,129-130,133-134,136-139,145-146,153-154,158-159,162-163,167-170,172-173,186-187,196-197,200-201,210-211,216-222,237-240,244-245,248-257,264,267-270,273-276
+  s_fbdf8bf039c74a::t_4e32c325fe5ef4 271
+  s_fbdf8bf039c74a::t_076fd736b88ca2 91,93,105
+  s_fbdf8bf039c74a::t_437132acef2988 29,84-85,89,92,95-100,108
+  s_fbdf8bf039c74a::t_eeb44c0737bd90 12,54
+  s_fbdf8bf039c74a::t_86b0407e62ffb4 37-38,58,230,265,272,277-279
+  s_fbdf8bf039c74a::t_928ca48f515009 70,171,174,176,183-184
+  s_fbdf8bf039c74a::t_58895e03f2460a 175,177-182,189-190
+  s_fbdf8bf039c74a::t_abb523a349f286 1-11,14,16-20,27-28,30-31,35-36,39,43-44,47-50,55-57,61-63,67-69,71-76,80,83,90,94,101,111-112,116-117,142-144,147-150,152,164-166,192-193,202-204,213-215,223,228,258-261,266,281-282
+docs/PERFORMANCE.md
+  s_fbdf8bf039c74a::t_746fbf41dd69e1 1-4,7-10,38-41,46-51,55-56,60-63,66-69,75-78
+  s_fbdf8bf039c74a::t_4e395f69ba1a4c 57-59
+  s_fbdf8bf039c74a::t_3800aeb3f0bd61 5-6,44-45,71-74
+  s_fbdf8bf039c74a::t_b0313d9256ee22 64-65
+  s_fbdf8bf039c74a::t_3cba9a20dbae4b 79-80
+  s_fbdf8bf039c74a::t_21ceefd2b109d3 11-37
+  s_fbdf8bf039c74a::t_c8e3bbdf08d58b 42-43,52-54,70
+Makefile
+  s_fbdf8bf039c74a::t_33db693b1bc59a 11,69-70,72
+  s_fbdf8bf039c74a::t_170bdb58bb5966 71,73
+  s_fbdf8bf039c74a::t_ea9af8700c483d 74
+README.md
+  s_fbdf8bf039c74a::t_746bb75cb3eb2e 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.9",
+  "base_commit_sha": "fd3b28bbafe3c7b62540d3e681e8cec62fa0054c",
+  "prompts": {},
+  "sessions": {
+    "s_fbdf8bf039c74a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d24-65ec-7e72-9466-f1d1d208f4ac",
+        "model": "gpt-6-luna"
+      },
+      "human_author": "Alexandr Hmyriak <agmyryak@playtika.com>",
+      "token_usage": {
+        "input_tokens": 187329,
+        "output_tokens": 39747,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 11358976
+      },
+      "billing_source": "subscription"
+    }
+  }
+}
