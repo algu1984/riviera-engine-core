@@ -127,9 +127,9 @@ int main() {
         ranged.emplace<Position>(p1, Position{20, 0});
         ranged.emplace<Position>(p2, Position{30, 0});
         ranged.emplace<Position>(p3, Position{40, 0});
+        ranged.emplace<Velocity>(velocityOnly, Velocity{5});
         ranged.emplace<Velocity>(p2, Velocity{3});
         ranged.emplace<Velocity>(p3, Velocity{4});
-        ranged.emplace<Velocity>(velocityOnly, Velocity{5});
         require(ranged.count<Position>() == 4 && ranged.count<Position, Velocity>() == 2,
                 "query counts span matching rows in multiple archetypes");
 
@@ -146,6 +146,12 @@ int main() {
         ranged.for_each_range<Position>(
             3, 4, [&](Entity, Position& position) { covered.push_back(position.x); });
         require(covered == std::vector<int>{10, 40}, "partial ranges select table-edge rows");
+
+        covered.clear();
+        ranged.for_each_range<Position>(
+            3, 9, [&](Entity, Position& position) { covered.push_back(position.x); });
+        require(covered == std::vector<int>{40},
+                "range ending beyond the match count clips at the final matching row");
 
         std::size_t calls = 0;
         ranged.for_each_range<Position>(4, 9, [&](Entity, Position&) { ++calls; });

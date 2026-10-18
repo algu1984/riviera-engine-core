@@ -4,6 +4,7 @@
 #include "engine/runtime/snapshot_exchange.hpp"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -108,6 +109,188 @@ void ecs_bench(std::size_t n, int warmup, int samples) {
     print("ecs_iteration", "direct_arrays", n, 0,
           {direct.median / ticks_per_sample, direct.p95 / ticks_per_sample}, direct_checksum, 0,
           setup_ns);
+}
+
+template <std::size_t I> struct FragmentTag {};
+using FragmentedWorld =
+    engine::ecs::World<Position, FragmentTag<0>, FragmentTag<1>, FragmentTag<2>, FragmentTag<3>,
+                       FragmentTag<4>, FragmentTag<5>, FragmentTag<6>, FragmentTag<7>>;
+
+template <std::size_t... I>
+void add_fragment_tags(FragmentedWorld& world, engine::ecs::Entity entity, std::size_t mask,
+                       std::index_sequence<I...>) {
+    ((mask & (std::size_t{1} << I) ? (void)world.template emplace<FragmentTag<I>>(entity)
+                                   : (void)0),
+     ...);
+}
+
+void populate_fragmented_world(FragmentedWorld& world, std::size_t masks,
+                               std::size_t rows_per_mask) {
+    for (std::size_t mask = 0; mask < masks; ++mask) {
+        for (std::size_t row = 0; row < rows_per_mask; ++row) {
+            auto entity = world.create();
+            world.emplace<Position>(entity, Position{float(mask), float(row), 1.0F});
+            add_fragment_tags(world, entity, mask, std::make_index_sequence<8>{});
+        }
+    }
+}
+
+[[gnu::noinline]] std::size_t count_fragmented(const FragmentedWorld& world) {
+    const auto result = world.template count<Position>();
+    std::atomic_signal_fence(std::memory_order_seq_cst);
+    return result;
+}
+
+void ecs_query_bench(std::size_t masks, std::size_t rows_per_mask, int warmup, int samples) {
+    const auto setup_start = Clock::now();
+    FragmentedWorld world;
+    populate_fragmented_world(world, masks, rows_per_mask);
+    const auto setup_ns =
+        std::chrono::duration<double, std::nano>(Clock::now() - setup_start).count();
+    const auto entity_count = masks * rows_per_mask;
+    std::uint64_t expected_values = 0;
+    for (std::size_t mask = 0; mask < masks; ++mask)
+        for (std::size_t row = 0; row < rows_per_mask; ++row)
+            expected_values += mask + row + 1;
+    constexpr std::size_t partitions = 16;
+    constexpr std::size_t query_batch = 16;
+    constexpr std::size_t range_batch = 64;
+    std::uint64_t checksum_value = 0;
+
+    auto count_query = measure(warmup, samples, [&] {
+        std::uint64_t local = 0;
+        for (std::size_t query = 0; query < query_batch; ++query)
+            local += count_fragmented(world);
+        if (local != query_batch * entity_count)
+            std::abort();
+        checksum_value += local;
+    });
+    const auto expected_count = count_fragmented(world);
+    if (expected_count != entity_count)
+        std::abort();
+    checksum_value += expected_count;
+    print("ecs_query", "count_masks_" + std::to_string(masks), 1, 0,
+          {count_query.median / query_batch, count_query.p95 / query_batch}, checksum_value, 0,
+          setup_ns, 0, query_batch);
+
+    auto range_case = [&](bool last) {
+        return measure(warmup, samples, [&] {
+            std::uint64_t local = 0;
+            for (std::size_t repeat = 0; repeat < range_batch; ++repeat) {
+                const auto total = count_fragmented(world);
+                const auto partition = last ? partitions - 1 : 0;
+                const auto first = total * partition / partitions;
+                const auto end = total * (partition + 1) / partitions;
+                std::size_t seen = 0;
+                world.template for_each_range<Position>(first, end, [&](auto, const Position& p) {
+                    local += static_cast<std::uint64_t>(p.x + p.y + p.z);
+                    ++seen;
+                });
+                if (seen != end - first)
+                    std::abort();
+            }
+            checksum_value += local;
+        });
+    };
+    const auto early = range_case(false);
+    const auto late = range_case(true);
+    const auto units = entity_count / partitions;
+    print("ecs_query", "count_first_range_" + std::to_string(masks), units, 0,
+          {early.median / range_batch, early.p95 / range_batch}, checksum_value, 0, setup_ns, 0,
+          range_batch);
+    print("ecs_query", "count_last_range_" + std::to_string(masks), units, 0,
+          {late.median / range_batch, late.p95 / range_batch}, checksum_value, 0, setup_ns, 0,
+          range_batch);
+
+    auto partitioned = measure(warmup, samples, [&] {
+        std::uint64_t local = 0;
+        for (std::size_t repeat = 0; repeat < range_batch; ++repeat) {
+            const auto total = count_fragmented(world);
+            std::size_t seen = 0;
+            for (std::size_t part = 0; part < partitions; ++part) {
+                const auto first = total * part / partitions;
+                const auto end = total * (part + 1) / partitions;
+                world.template for_each_range<Position>(first, end, [&](auto, const Position& p) {
+                    local += static_cast<std::uint64_t>(p.x + p.y + p.z);
+                    ++seen;
+                });
+            }
+            if (seen != entity_count)
+                std::abort();
+        }
+        if (local != range_batch * expected_values)
+            std::abort();
+        checksum_value += local + range_batch * entity_count;
+    });
+    print("ecs_query", "count_16_ranges_" + std::to_string(masks), entity_count, 0,
+          {partitioned.median / range_batch, partitioned.p95 / range_batch}, checksum_value, 0,
+          setup_ns, 0, range_batch);
+}
+
+struct StructuralTag {};
+using StructuralWorld = engine::ecs::World<Position, StructuralTag>;
+
+void ecs_structure_bench(int warmup, int samples) {
+    constexpr std::size_t entities = 128;
+    const auto setup_start = Clock::now();
+    StructuralWorld world;
+    std::array<engine::ecs::Entity, entities> items{};
+    for (auto& entity : items) {
+        entity = world.create();
+        world.emplace<Position>(entity, Position{1.0F, 2.0F, 3.0F});
+    }
+    const auto setup_ns =
+        std::chrono::duration<double, std::nano>(Clock::now() - setup_start).count();
+    const auto structure = measure(warmup, samples, [&] {
+        for (const auto entity : items) {
+            if (!world.emplace<StructuralTag>(entity) || !world.remove<StructuralTag>(entity))
+                std::abort();
+        }
+    });
+    std::uint64_t structure_checksum = 0;
+    for (const auto entity : items) {
+        const auto* p = world.get<Position>(entity);
+        if (p == nullptr)
+            std::abort();
+        structure_checksum += static_cast<std::uint64_t>(p->x + p->y + p->z);
+    }
+    print("ecs_structure", "toggle_existing_archetypes", entities * 2, 0, structure,
+          structure_checksum, 0, setup_ns);
+
+    const auto fragmented_setup_start = Clock::now();
+    FragmentedWorld fragmented;
+    constexpr std::size_t masks = 128;
+    constexpr std::size_t rows_per_mask = 4;
+    std::array<engine::ecs::Entity, masks> fragmented_items{};
+    for (std::size_t mask = 0; mask < masks; ++mask) {
+        for (std::size_t row = 0; row < rows_per_mask; ++row) {
+            auto entity = fragmented.create();
+            fragmented.emplace<Position>(entity, Position{float(mask), float(row), 1.0F});
+            add_fragment_tags(fragmented, entity, mask, std::make_index_sequence<7>{});
+            if (row == 0)
+                fragmented_items[mask] = entity;
+        }
+    }
+    for (const auto entity : fragmented_items) {
+        if (!fragmented.emplace<FragmentTag<7>>(entity) ||
+            !fragmented.remove<FragmentTag<7>>(entity))
+            std::abort();
+    }
+    const auto fragmented_setup_ns =
+        std::chrono::duration<double, std::nano>(Clock::now() - fragmented_setup_start).count();
+    const auto fragmented_structure = measure(warmup, samples, [&] {
+        for (const auto entity : fragmented_items) {
+            if (!fragmented.emplace<FragmentTag<7>>(entity) ||
+                !fragmented.remove<FragmentTag<7>>(entity))
+                std::abort();
+        }
+    });
+    std::uint64_t fragmented_checksum = 0;
+    fragmented.template for_each<Position>([&](auto, const Position& p) {
+        fragmented_checksum += static_cast<std::uint64_t>(p.x + p.y + p.z);
+    });
+    print("ecs_structure", "toggle_tag_128_masks", masks * 2, 0, fragmented_structure,
+          fragmented_checksum, 0, fragmented_setup_ns);
 }
 
 struct Payload {
@@ -272,6 +455,10 @@ int main(int argc, char** argv) {
               << ",\"flags\":\"-O3 -DNDEBUG -ffp-contract=off\"},\"type\":\"header\"}\n";
     for (auto n : {1000U, 10000U, 100000U})
         ecs_bench(n, warmup, samples);
+    ecs_query_bench(1, 256, warmup, samples);
+    ecs_query_bench(64, 8, warmup, samples);
+    ecs_query_bench(256, 16, warmup, samples);
+    ecs_structure_bench(warmup, samples);
     exchange_bench(64, samples);
     exchange_bench(1024, samples);
     for (int workers : {0, 1, 2, 4}) {

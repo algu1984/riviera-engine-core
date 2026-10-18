@@ -44,6 +44,22 @@ second. The final checksum sums each coordinate after conversion to double and t
 100,000 to an unsigned integer. The harness aborts if Core and direct-array
 checksums differ.
 
+The `ecs_query` cases exercise repeated component-domain counts and partition
+ranges across 1, 64, or 256 populated component masks. Each mask has a fixed
+number of `Position` rows; the first and last range cases count the domain and
+visit one of 16 equal ranges, while `count_16_ranges` counts once and visits all
+16 ranges. The count case batches 16 domain queries and reports time per query.
+Range cases batch 64 repetitions and report per-query or per-sweep time;
+`work_iterations` records the batch size.
+The `ecs_structure` cases repeatedly add and remove a tag on 128 entities.
+`toggle_existing_archetypes` moves among two masks; `toggle_tag_128_masks`
+moves among 128 populated masks and their 128 pre-created counterparts. World
+construction, population, and counterpart creation are outside the timed region
+and reported as `setup_ns`.
+Iteration counts and the complete partition sweep are checked before results
+are emitted. These cases are intended to isolate query-table scaling and
+steady-state structural migration; they are not application-level ECS scores.
+
 The requested-exchange cases use one requesting/acquiring consumer thread and
 one producer thread. The consumer submits a request through
 `RequestedExchange`, waits with bounded yielding, then acquires the payload.
@@ -76,3 +92,15 @@ short smoke runs are useful only to verify execution and output shape.
 
 These measurements describe the specific workloads above and do not establish
 general engine performance.
+
+## Range traversal change
+
+A paired check on 2026-10-18 used the same Apple M1 Pro build flags as above,
+with 21 samples and 2 warmups per process across three alternating baseline and
+updated runs. The updated range traversal no longer performs a full component
+count before visiting a caller-specified range. Median time for one count plus
+16 range visits fell from 1,347 ns to 744.14 ns with 64 populated masks (512
+rows), and from 6,324.22 ns to 3,826.83 ns with 256 populated masks (4,096
+rows). The 128-mask structural-toggle case and the two-mask control showed no
+material change. These measurements describe the query workloads above, not
+whole-system scheduling or application performance.

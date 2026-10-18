@@ -206,9 +206,7 @@ template <class... Components> class World {
     template <class... T, class Fn>
     void for_each_range(std::size_t first, std::size_t last, Fn&& fn) {
         static_assert(sizeof...(T) > 0 && (registered<T> && ...), "query registered components");
-        const auto total = count<T...>();
-        const auto end = std::min(last, total);
-        if (first >= end)
+        if (first >= last)
             return;
         const auto required = query_mask<T...>();
         std::size_t ordinal = 0;
@@ -217,16 +215,16 @@ template <class... Components> class World {
             if ((t.mask & required) != required)
                 continue;
             const auto tableEnd = ordinal + t.entities.size();
-            if (first < tableEnd && end > ordinal) {
+            if (first < tableEnd && last > ordinal) {
                 const auto rowBegin = first > ordinal ? first - ordinal : 0;
-                const auto rowEnd = std::min(end, tableEnd) - ordinal;
+                const auto rowEnd = std::min(last, tableEnd) - ordinal;
                 for (auto row = rowBegin; row < rowEnd; ++row)
                     std::invoke(fn, t.entities[row],
                                 std::get<detail::type_index<T, Components...>()>(t.columns)
                                     ->values[row]...);
             }
             ordinal = tableEnd;
-            if (ordinal >= end)
+            if (ordinal >= last)
                 break;
         }
     }
