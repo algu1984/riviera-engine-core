@@ -9,6 +9,7 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -261,10 +262,12 @@ template <class... Components> class World {
     }
 
     Archetype& table(std::bitset<sizeof...(Components)> mask) {
-        for (auto& t : tables_)
-            if (t->mask == mask)
-                return *t;
-        tables_.push_back(std::make_unique<Archetype>(mask));
+        if (const auto found = tableLookup_.find(mask); found != tableLookup_.end())
+            return *found->second;
+        auto owned = std::make_unique<Archetype>(mask);
+        reserve_for_one(tables_);
+        tableLookup_.emplace(mask, owned.get());
+        tables_.push_back(std::move(owned));
         return *tables_.back();
     }
     template <class T> static void reserve_for_one(std::vector<T>& values) {
@@ -347,6 +350,7 @@ template <class... Components> class World {
     std::vector<Location> locations_;
     std::vector<std::uint32_t> free_;
     std::vector<std::unique_ptr<Archetype>> tables_;
+    std::unordered_map<std::bitset<sizeof...(Components)>, Archetype*> tableLookup_;
     bool executing_ = false;
 };
 } // namespace engine::ecs

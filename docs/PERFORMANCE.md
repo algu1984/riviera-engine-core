@@ -93,14 +93,28 @@ short smoke runs are useful only to verify execution and output shape.
 These measurements describe the specific workloads above and do not establish
 general engine performance.
 
-## Range traversal change
+## Range traversal and archetype lookup comparison
 
-A paired check on 2026-10-18 used the same Apple M1 Pro build flags as above,
-with 21 samples and 2 warmups per process across three alternating baseline and
-updated runs. The updated range traversal no longer performs a full component
-count before visiting a caller-specified range. Median time for one count plus
-16 range visits fell from 1,347 ns to 744.14 ns with 64 populated masks (512
-rows), and from 6,324.22 ns to 3,826.83 ns with 256 populated masks (4,096
-rows). The 128-mask structural-toggle case and the two-mask control showed no
-material change. These measurements describe the query workloads above, not
-whole-system scheduling or application performance.
+A comparison on 2026-10-18 used the same Apple M1 Pro build flags as above,
+with 21 samples and 2 warmups per process across three alternating runs. The
+baseline is `d65ad198`; “range” adds the `for_each_range` precount removal, and
+“range + lookup” adds a mask-to-archetype hash lookup for structural table
+resolution.
+
+| Case | Baseline, ns | Range, ns | Range + lookup, ns |
+| --- | ---: | ---: | ---: |
+| Count + 16 ranges, 64 masks | 1,347.00 | 744.14 | 731.13 |
+| Count + 16 ranges, 256 masks | 6,324.22 | 3,826.83 | 3,818.36 |
+| Toggle tag across 128 masks | 21,333 | 21,500 | 5,834 |
+| Toggle tag across 2 masks | 2,459 | 2,458 | 2,750 |
+
+Values are median times normalized to one listed query case or sweep, not the
+full batched sample time.
+
+The lookup maps component masks to stable archetype pointers during table
+creation and structural migration. The append-only `tables_` vector remains the
+query iteration order, and ordinary component access is unchanged. The large
+mask toggle case improved substantially; the two-mask control costs an extra
+291 ns per sample, or about 1.14 ns per tag transition across its 256
+transitions. These focused cases do not establish whole-system or application
+performance.
