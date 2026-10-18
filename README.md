@@ -9,15 +9,34 @@ headers retain the established `engine::` namespace and `engine/...` paths.
 
 The core has no operating-system thread creation and no browser, Emscripten, WebGPU, renderer, or physics-engine dependency in its authored library headers and sources. Applications may provide an ECS world that includes both core hierarchy components and their own renderer/game components; hierarchy propagation operates directly on that same typed world.
 
+See [docs/BUILD.md](docs/BUILD.md) for build and verification instructions.
 See [docs/CORE_DESIGN.md](docs/CORE_DESIGN.md) for the high-level architecture and design decisions.
 See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for reproducible native benchmarks and their scope.
 The latest Core-only native result sample is available at [benchmarks/results/native-sample.json](benchmarks/results/native-sample.json).
 
-## Build and verify
+## Included modules
 
-`make build` builds `build/libriviera-engine-core.a`. `make test` runs dense ECS and range traversal, inferred system access and structural commands, runtime schedules and plugins, snapshot/math, hierarchy, general job scheduler, and Xenium portability tests. `make wasm-test` builds and runs pthread-enabled ECS, system scheduling and commands, snapshot, general scheduler, and Xenium portability tests under Node. Emscripten is only needed for that optional target.
+Core provides **reusable C++20 engine infrastructure**, not a complete renderer
+or game engine. The following pieces are implemented:
 
-`make deps` initializes the pinned Xenium submodule and applies its WASM portability patch. `make deps-check` verifies that local checkout offline. Builds and tests require the dependency to be initialized but never fetch it implicitly. `make boundary-check` checks authored library headers and sources for platform dependencies, blocking synchronization, and include paths outside the standard library, this SDK, and Xenium. `core.mk` exports absolute `CORE_SOURCES`, `CORE_HEADERS`, `CORE_XENIUM_HEADERS`, and `CORE_INCLUDE_FLAGS` for parent builds.
+| Module | What Core provides |
+| --- | --- |
+| **ECS — entities and components** | Generational entity IDs, dense archetype storage, component insertion/removal, entity destruction, typed lookups, and component queries ([`world.hpp`](include/engine/ecs/world.hpp)). |
+| **ECS — systems and schedules** | Typed `Read<T>` / `Write<T>` access, inferred read/write conflicts, explicit system dependencies, cycle checking, cached task graphs, and parallel range processing ([`access.hpp`](include/engine/ecs/access.hpp), [`system_scheduler.hpp`](include/engine/ecs/system_scheduler.hpp)). |
+| **ECS — structural commands** | Per-system `Commands` and `DeferredCommands` for safe entity/component structural changes at scheduling boundaries ([`commands.hpp`](include/engine/ecs/commands.hpp)). |
+| **ECS — runtime and plugins** | `Startup`, `FixedUpdate`, `Update`, and `RenderExtract` schedules; system and plugin registration ([`runtime.hpp`](include/engine/ecs/runtime.hpp)). |
+| **Job system** | General-purpose task graphs, dependencies, job submission, completion polling, and host-driven worker execution; usable without ECS ([`task_graph.hpp`](include/engine/jobs/task_graph.hpp), [`job_scheduler.hpp`](include/engine/jobs/job_scheduler.hpp)). |
+| **Simulation time** | Configurable fixed-step accumulator, step limits, interpolation alpha, and discarded-time tracking ([`fixed_step_clock.hpp`](include/engine/runtime/fixed_step_clock.hpp)). |
+| **Simulation ↔ render handoff** | Request-driven reusable two-slot payload exchange for one simulation producer and one render consumer ([`requested_exchange.hpp`](include/engine/runtime/requested_exchange.hpp)); alternatively, immutable previous/current snapshot publication using Xenium guards ([`snapshot_exchange.hpp`](include/engine/runtime/snapshot_exchange.hpp)). |
+| **Scene transforms** | Local/global transforms, parent relationships, hierarchy propagation, cycle/stale-parent handling, and an ECS transform plugin ([`hierarchy.hpp`](include/engine/scene/hierarchy.hpp), [`transform_plugin.hpp`](include/engine/scene/transform_plugin.hpp)). |
+| **Math** | Small vector, quaternion, and matrix primitives and common transform operations ([`math.hpp`](include/engine/math.hpp)). |
+
+**Boundaries:** Core does **not** create OS threads or Web Workers, own the
+application loop, render with WebGPU/Metal, or implement a physics engine. Those
+parts belong to the host/application. The ECS component type set is defined at
+compile time by `World<Components...>`; systems run when their schedules are
+invoked, not through automatic per-object `update()` calls. The render exchanges
+provide data handoff primitives, not an automatically launched rendering pipeline.
 
 ## Snapshot exchange
 
