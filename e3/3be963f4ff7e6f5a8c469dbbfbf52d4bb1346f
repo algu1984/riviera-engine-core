@@ -1,0 +1,20 @@
+benchmarks/core.cpp
+  h_9f89d000628188 7,114-295,458-461
+docs/PERFORMANCE.md
+  h_9f89d000628188 47-62,95-106
+include/engine/ecs/world.hpp
+  h_9f89d000628188 209,218,220,227
+tests/ecs.cpp
+  h_9f89d000628188 130,150-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.9",
+  "base_commit_sha": "e33be963f4ff7e6f5a8c469dbbfbf52d4bb1346f",
+  "prompts": {},
+  "humans": {
+    "h_9f89d000628188": {
+      "author": "Alexandr Hmyriak <agmyryak@playtika.com>"
+    }
+  }
+}
