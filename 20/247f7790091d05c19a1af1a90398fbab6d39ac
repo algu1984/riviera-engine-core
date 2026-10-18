@@ -1,0 +1,16 @@
+docs/PERFORMANCE.md
+  h_9f89d000628188 96-120
+include/engine/ecs/world.hpp
+  h_9f89d000628188 12,265-270,353
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.9",
+  "base_commit_sha": "20247f7790091d05c19a1af1a90398fbab6d39ac",
+  "prompts": {},
+  "humans": {
+    "h_9f89d000628188": {
+      "author": "Alexandr Hmyriak <agmyryak@playtika.com>"
+    }
+  }
+}
